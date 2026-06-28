@@ -979,20 +979,16 @@
         };
       }
 
-      if (check.total >= 9 && check.total <= 10) {
-        return generateZone2Plan(key);
-      }
-      if (check.total >= 6 && check.total <= 8) {
-        return generateLoadedMobilityPlan(key);
-      }
-      if (check.total <= 5) {
+      if (check.total >= 3 && check.total <= 7) {
         return generateGeneralMobilityPlan(key);
       }
-
-      const pastSeven = getEntriesBetween(7);
-      const didZone2 = pastSeven.some((item) => item.sessionType === "zone2");
-      if (check.total === 10 && !didZone2) {
-        return generateZone2Plan(key);
+      if (check.total >= 8 && check.total <= 9) {
+        return generateLoadedMobilityPlan(key);
+      }
+      if (check.total === 10) {
+        const pastSeven = getEntriesBetween(7);
+        const didZone2 = pastSeven.some((item) => item.sessionType === "zone2");
+        if (!didZone2) return generateZone2Plan(key);
       }
 
       const strengthPlan = generateStrengthPlan(key);
