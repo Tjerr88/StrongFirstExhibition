@@ -780,6 +780,12 @@
       high: { low: 20, medium: 30, high: 50 }
     };
 
+    const BARBELL_VOLUME_PRESETS = {
+      low: { low: 10, medium: 15, high: 20 },
+      medium: { low: 15, medium: 20, high: 25 },
+      high: { low: 20, medium: 25, high: 30 }
+    };
+
     const KB_TOTALS = {
       grind: VOLUME_PRESETS,
       seconds: VOLUME_PRESETS,
@@ -1106,15 +1112,16 @@
         sessionType: "strength",
         modality: "barbell",
         title: block.title,
-        subtitle: getStrengthDoseLabel(),
+        subtitle: getStrengthDoseLabel(BARBELL_VOLUME_PRESETS),
         summary: "",
         dice: block.dice,
         accentLift: volumeItems.accentLift,
         previousAccentLift: state.lastBarbellAccent,
         items: shuffle(volumeItems.items).map((item) => ({
           ...item,
-          target: getStrengthTarget(item.volume),
-          prescription: formatStrengthDose(item.volume),
+          target: getStrengthTarget(item.volume, BARBELL_VOLUME_PRESETS),
+          dose: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS),
+          prescription: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS),
           perSet: PER_SET.grind,
           done: 0,
           weight: state.barbell.weights[item.name] || "",
@@ -1166,22 +1173,23 @@
       };
     }
 
-    function formatStrengthDose(volume) {
-      const reps = getStrengthTarget(volume);
+    function formatStrengthDose(volume, presets) {
+      const reps = getStrengthTarget(volume, presets);
       return volume === "high" ? reps + "+ total reps" : reps + " total reps";
     }
 
-    function getStrengthTarget(volume) {
-      return getVolumePreset()[volume];
+    function getStrengthTarget(volume, presets) {
+      return getVolumePreset(presets)[volume];
     }
 
-    function getStrengthDoseLabel() {
-      const preset = getVolumePreset();
+    function getStrengthDoseLabel(presets) {
+      const preset = getVolumePreset(presets);
       return preset.low + " / " + preset.medium + " / " + preset.high + "+ total reps.";
     }
 
-    function getVolumePreset() {
-      return VOLUME_PRESETS[state.settings.volume] || VOLUME_PRESETS.low;
+    function getVolumePreset(presets) {
+      const source = presets || VOLUME_PRESETS;
+      return source[state.settings.volume] || source.low;
     }
 
     function drawBlock(bagKey, blocks) {
