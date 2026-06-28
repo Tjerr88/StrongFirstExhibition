@@ -768,7 +768,7 @@
           { name: "Snatch", type: "singleQuick" },
           { name: "Low Pull Snatch", type: "singleQuick" },
           { name: "High Pull", type: "singleQuick" },
-          { name: "Front/Side Raise Snatch", type: "singleQuick" },
+          { name: "Front/Side Raise Snatch", type: "grind" },
           { name: "Double Snatch", type: "doubleQuick" }
         ]
       },
@@ -1302,13 +1302,11 @@
           </div>
           <div class="button-row" style="margin-top: 16px;">
             <button class="primary" type="button" id="finishButton" ${done ? "disabled" : ""}>${done ? "Done" : "Complete"}</button>
-            <button class="secondary" type="button" id="rerollButton" ${done ? "disabled" : ""}>Reroll</button>
           </div>
         </article>
       `;
 
       document.getElementById("finishButton").addEventListener("click", finishToday);
-      document.getElementById("rerollButton").addEventListener("click", rerollToday);
       bindBarbellControls();
       bindRepTrackers();
     }
@@ -1610,13 +1608,6 @@
       return plan.items.map((item) => item.name).join(" | ");
     }
 
-    function rerollToday() {
-      if (isTodayDone()) return;
-      state.todayPlan = generatePlan(todayKey());
-      saveState();
-      renderToday();
-    }
-
     function renderLog() {
       const view = document.getElementById("logView");
       const history = state.history.length
@@ -1649,7 +1640,12 @@
             <label class="field">
               <span>Session</span>
               <select id="backfillType">
-                <option value="strength">Strength</option>
+                <option value="kettlebell">Kettlebell</option>
+                <option value="barbell:bar-a">Barbell A</option>
+                <option value="barbell:bar-b">Barbell B</option>
+                <option value="barbell:bar-c">Barbell C</option>
+                <option value="bodyweight:body-a">Bodyweight A</option>
+                <option value="bodyweight:body-b">Bodyweight B</option>
                 <option value="zone2">Zone 2</option>
                 <option value="loadedMobility">Loaded Mobility</option>
                 <option value="generalMobility">General Mobility</option>
@@ -1671,18 +1667,53 @@
       const date = document.getElementById("backfillDate").value;
       const type = document.getElementById("backfillType").value;
       if (!date || !type) return;
-      state.history.unshift({
+      const entry = createBackfillEntry(date, type);
+      state.history.unshift(entry);
+      state.history = state.history.slice(0, 120);
+      if (entry.sessionType === "strength") {
+        state.lastStrengthModality = entry.modality;
+      }
+      state.todayPlan = null;
+      saveState();
+      render();
+    }
+
+    function createBackfillEntry(date, type) {
+      if (type.includes(":")) {
+        const [modality, blockId] = type.split(":");
+        const blocks = modality === "barbell" ? BARBELL_BLOCKS : BODYWEIGHT_BLOCKS;
+        const block = blocks.find((item) => item.id === blockId);
+        return {
+          id: "backfill-" + Date.now(),
+          dateKey: date,
+          completedAt: new Date().toISOString(),
+          sessionType: "strength",
+          modality,
+          blockId,
+          title: block ? block.title : SESSION_LABELS[modality],
+          summary: "Added manually."
+        };
+      }
+      if (type === "kettlebell") {
+        return {
+          id: "backfill-" + Date.now(),
+          dateKey: date,
+          completedAt: new Date().toISOString(),
+          sessionType: "strength",
+          modality: "kettlebell",
+          title: "Kettlebell Exhibition",
+          summary: "Added manually."
+        };
+      }
+      return {
         id: "backfill-" + Date.now(),
         dateKey: date,
         completedAt: new Date().toISOString(),
         sessionType: type,
-        modality: type === "strength" ? "backfill" : null,
-        title: "Backfill " + (SESSION_LABELS[type] || type),
+        modality: null,
+        title: SESSION_LABELS[type] || type,
         summary: "Added manually."
-      });
-      state.todayPlan = null;
-      saveState();
-      render();
+      };
     }
 
     function resetAll() {
@@ -1747,7 +1778,7 @@
     function updateInstallButton() {
       const button = document.getElementById("installButton");
       if (!button) return;
-      button.classList.toggle("visible", Boolean(deferredInstallPrompt) && !isInstalledApp());
+      button.classList.toggle("visible", !isInstalledApp() && window.location.protocol !== "file:");
     }
 
     window.addEventListener("beforeinstallprompt", (event) => {
@@ -1762,10 +1793,13 @@
     });
 
     document.getElementById("installButton").addEventListener("click", async () => {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice.catch(() => {});
-      deferredInstallPrompt = null;
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice.catch(() => {});
+        deferredInstallPrompt = null;
+      } else {
+        window.alert("Chrome menu > Add to Home screen.");
+      }
       updateInstallButton();
     });
 
