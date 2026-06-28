@@ -185,6 +185,16 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
     }
 
+    .install-button {
+      display: none;
+    }
+
+    .install-button.visible {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .view { display: none; }
     .view.active { display: grid; gap: 14px; }
 
@@ -632,6 +642,7 @@
         <button class="tab" type="button" data-tab="log">Log</button>
       </nav>
       <div class="toggle-row" aria-label="Strength options">
+        <button class="secondary install-button" type="button" id="installButton">Install</button>
         <label class="toggle">
           <input type="checkbox" id="toggleKettlebell" checked>
           <span>Kettlebell</span><span class="switch"></span>
@@ -1727,9 +1738,40 @@
       });
     });
 
+    let deferredInstallPrompt = null;
+
+    function isInstalledApp() {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    }
+
+    function updateInstallButton() {
+      const button = document.getElementById("installButton");
+      if (!button) return;
+      button.classList.toggle("visible", Boolean(deferredInstallPrompt) && !isInstalledApp());
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      updateInstallButton();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallButton();
+    });
+
+    document.getElementById("installButton").addEventListener("click", async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice.catch(() => {});
+      deferredInstallPrompt = null;
+      updateInstallButton();
+    });
+
     if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js").then(updateInstallButton).catch(() => {});
       });
     }
 
