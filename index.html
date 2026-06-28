@@ -1372,7 +1372,7 @@
       const week = getEntriesBetween(7);
       const check = state.readiness[plan.dateKey];
       if (check && check.total) parts.push(`<span class="badge">Readiness: ${escapeHtml(check.total + "/15")}</span>`);
-      parts.push(`<span class="badge">Strength: ${week.filter((item) => item.sessionType === "strength").length}/3</span>`);
+      parts.push(`<span class="badge">Strength: ${week.filter((item) => item.sessionType === "strength").length} this week</span>`);
       if (plan.modality) parts.push(`<span class="badge red">${escapeHtml(SESSION_LABELS[plan.modality])}</span>`);
       if (plan.accentKey) {
         const pattern = KB_PATTERNS.find((item) => item.key === plan.accentKey);
