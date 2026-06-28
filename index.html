@@ -1013,7 +1013,8 @@
       if (!base.length) return null;
       const last = latestStrength();
       const lastModality = last ? last.modality : state.lastStrengthModality;
-      let candidates = base.filter((item) => item !== lastModality);
+      const uniqueModalities = [...new Set(base)];
+      let candidates = uniqueModalities.length > 1 ? base.filter((item) => item !== lastModality) : base;
       if (!candidates.length) {
         return {
           dateKey: key || todayKey(),
