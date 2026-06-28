@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#11110f">
+  <meta name="description" content="The StrongFirst Exhibition training app.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SFE">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <title>The StrongFirst Exhibition</title>
+  <style>
+    :root {
+      --bg: #080807;
+      --bg-2: #12110e;
+      --surface: rgba(19, 18, 15, 0.88);
+      --surface-2: rgba(41, 36, 27, 0.70);
+      --surface-3: rgba(9, 9, 8, 0.92);
+      --text: #f2ead6;
+      --muted: #b4a78d;
+      --soft: #766c59;
+      --line: rgba(194, 142, 52, 0.20);
+      --line-strong: rgba(215, 180, 106, 0.38);
+      --accent: #8e1715;
+      --accent-2: #c99a3d;
+      --green: #6d8f5a;
+      --danger: #a43a2e;
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.58);
+      --radius: 8px;
+      --max: 980px;
+      --font: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --display: "Georgia", "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 28px),
+        linear-gradient(180deg, #020202 0%, #11100d 48%, #070706 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(201,154,61,0.11), transparent 26%),
+        linear-gradient(110deg, transparent 0 14%, rgba(142,23,21,0.16) 14% 14.5%, transparent 14.5% 100%),
+        linear-gradient(90deg, rgba(0,0,0,0.45), transparent 28%, transparent 72%, rgba(0,0,0,0.45));
+    }
+
+    button, input, select { font: inherit; }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: min(calc(100% - 28px), var(--max));
+      margin: 24px auto 48px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero {
+      min-height: 180px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: #030303;
+      box-shadow: var(--shadow);
+      padding: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 18px;
+      height: 7px;
+      border-top: 1px solid rgba(215,180,106,0.42);
+      border-bottom: 1px solid rgba(215,180,106,0.18);
+    }
+
+    .hero img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 3 / 1;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent-2);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+    }
+
+    h1, h2, h3, h4, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 10px;
+      font-family: var(--display);
+      font-size: clamp(2rem, 5vw, 4.3rem);
+      font-weight: 700;
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      max-width: 66ch;
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .top-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(31,29,24,0.96), rgba(9,9,8,0.94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 38px rgba(0,0,0,0.34);
+      backdrop-filter: blur(10px);
+    }
+
+    .tabs, .toggle-row, .button-row, .mini-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tabs { flex-wrap: nowrap; }
+
+    .tab {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .tab.active {
+      background: linear-gradient(180deg, rgba(201,154,61,0.24), rgba(82,56,20,0.22));
+      color: var(--text);
+      border-color: rgba(215, 180, 106, 0.42);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .view { display: none; }
+    .view.active { display: grid; gap: 14px; }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(27,25,20,0.94), rgba(9,9,8,0.92));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 22px 48px rgba(0,0,0,0.38);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card.dark { background: var(--surface-3); }
+
+    .main-card {
+      background:
+        linear-gradient(135deg, rgba(142,23,21,0.22), transparent 32%),
+        linear-gradient(180deg, rgba(42,38,30,0.96), rgba(10,10,9,0.96));
+      border-color: rgba(201,154,61,0.34);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin-bottom: 6px;
+      font-family: var(--display);
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin-bottom: 4px;
+      font-size: 0.98rem;
+      letter-spacing: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .quiet {
+      color: var(--soft);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(23,22,19,0.86), rgba(5,5,5,0.66));
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .badge.gold { color: #f0d9a0; border-color: rgba(215,180,106,0.32); }
+    .badge.red { color: #f0b0a4; border-color: rgba(179,68,45,0.42); }
+    .badge.green { color: #c6dfba; border-color: rgba(126,163,106,0.34); }
+
+    .toggle-row { justify-content: flex-end; }
+
+    .toggle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(23,22,19,0.88), rgba(5,5,5,0.70));
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .switch {
+      width: 34px;
+      height: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      position: relative;
+    }
+
+    .switch::after {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      background: var(--muted);
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .toggle:has(input:checked) {
+      color: var(--text);
+      border-color: rgba(215,180,106,0.34);
+      background: rgba(215,180,106,0.11);
+    }
+
+    .toggle:has(input:checked) .switch::after {
+      transform: translateX(16px);
+      background: var(--accent-2);
+    }
+
+    .volume-control {
+      display: inline-grid;
+      grid-template-columns: auto repeat(3, minmax(34px, 1fr));
+      align-items: center;
+      gap: 4px;
+      min-height: 42px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(23,22,19,0.88), rgba(5,5,5,0.70));
+    }
+
+    .volume-label {
+      padding: 0 7px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 900;
+    }
+
+    .volume-button {
+      min-height: 32px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 900;
+    }
+
+    .volume-button.active {
+      color: var(--text);
+      border-color: rgba(215,180,106,0.32);
+      background: rgba(215,180,106,0.13);
+    }
+
+    .grid { display: grid; gap: 12px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.session-list { grid-template-columns: 1fr; }
+
+    .lift-card {
+      display: grid;
+      gap: 9px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(22,21,18,0.96), rgba(6,6,5,0.92));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+      min-width: 0;
+    }
+
+    .lift-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .kicker {
+      margin: 0 0 4px;
+      color: var(--accent-2);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 900;
+    }
+
+    .lift-name {
+      margin: 0;
+      color: var(--text);
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .dose {
+      white-space: nowrap;
+      color: #e8d09a;
+      font-weight: 900;
+      font-size: 0.92rem;
+    }
+
+    .subdose {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .rep-tracker {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .rep-count {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(34px, 1fr));
+      gap: 5px;
+    }
+
+    .score-button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: linear-gradient(180deg, rgba(23,22,19,0.88), rgba(5,5,5,0.70));
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .score-button.active {
+      color: var(--text);
+      border-color: rgba(215,180,106,0.36);
+      background: rgba(215,180,106,0.14);
+    }
+
+    .accent-card {
+      border-color: rgba(142,23,21,0.66);
+      background:
+        linear-gradient(90deg, rgba(142,23,21,0.18), transparent 36%),
+        linear-gradient(180deg, rgba(35,30,24,0.92), rgba(8,8,7,0.90));
+    }
+
+    .low-card { border-color: rgba(126,163,106,0.34); }
+    .hybrid-card { border-style: dashed; }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      background: rgba(0,0,0,0.48);
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(215,180,106,0.55);
+      box-shadow: 0 0 0 3px rgba(215,180,106,0.10);
+    }
+
+    .primary, .secondary, .ghost, .nudge {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 900;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(25,24,21,0.92), rgba(5,5,5,0.88));
+    }
+
+    .primary {
+      padding: 0 18px;
+      border-color: rgba(142,23,21,0.72);
+      background: linear-gradient(180deg, #a5261f, #5d100f);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 14px 26px rgba(142,23,21,0.26);
+    }
+
+    .secondary {
+      padding: 0 16px;
+      background: linear-gradient(180deg, rgba(60,50,31,0.46), rgba(7,7,6,0.88));
+    }
+
+    .ghost {
+      padding: 0 16px;
+      color: #eeb7ad;
+      border-color: rgba(200,103,88,0.34);
+      background: rgba(142,23,21,0.12);
+    }
+
+    .nudge {
+      width: 44px;
+      padding: 0;
+      font-size: 1.1rem;
+    }
+
+    .nudge.active-plus { color: #c6dfba; border-color: rgba(126,163,106,0.48); }
+    .nudge.active-minus { color: #eeb7ad; border-color: rgba(200,103,88,0.48); }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .history-item {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(23,22,19,0.88), rgba(5,5,5,0.70));
+    }
+
+    .history-item strong { display: block; margin-bottom: 4px; }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(23,22,19,0.88), rgba(5,5,5,0.70));
+      padding: 12px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 900;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .done {
+      opacity: 0.74;
+    }
+
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -12vh;
+      width: 9px;
+      height: 15px;
+      border-radius: 2px;
+      opacity: 0.95;
+      animation: confettiFall var(--fall, 2600ms) ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+      }
+      100% {
+        transform: translate3d(var(--drift, 0), 112vh, 0) rotate(var(--spin, 480deg));
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(calc(100% - 18px), var(--max)); margin-top: 12px; }
+      .hero { min-height: 112px; }
+      .top-bar { grid-template-columns: 1fr; }
+      .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tab { width: 100%; }
+      .toggle-row { justify-content: stretch; display: grid; grid-template-columns: 1fr; }
+      .toggle { justify-content: space-between; }
+      .volume-control { grid-template-columns: auto repeat(3, minmax(0, 1fr)); }
+      .check-grid { grid-template-columns: 1fr; }
+      .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .card-header { display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <img src="./header.png" alt="The StrongFirst Exhibition">
+      <h1 class="sr-only">The StrongFirst Exhibition</h1>
+    </section>
+
+    <section class="top-bar" aria-label="App navigation and visible options">
+      <nav class="tabs" aria-label="Views">
+        <button class="tab active" type="button" data-tab="today">Today</button>
+        <button class="tab" type="button" data-tab="log">Log</button>
+      </nav>
+      <div class="toggle-row" aria-label="Strength options">
+        <label class="toggle">
+          <input type="checkbox" id="toggleKettlebell" checked>
+          <span>Kettlebell</span><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggleBarbell" checked>
+          <span>Barbell</span><span class="switch"></span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggleBodyweight" checked>
+          <span>Bodyweight</span><span class="switch"></span>
+        </label>
+        <div class="volume-control" aria-label="Volume">
+          <span class="volume-label">Vol</span>
+          <button class="volume-button" type="button" data-volume="low">L</button>
+          <button class="volume-button" type="button" data-volume="medium">M</button>
+          <button class="volume-button" type="button" data-volume="high">H</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view active" id="todayView"></section>
+    <section class="view" id="logView"></section>
+  </main>
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+  <script>
+    const STORAGE_KEY = "strongfirst-exhibition-v1";
+    const APP_VERSION = 1;
+    const SESSION_LABELS = {
+      strength: "Strength",
+      kettlebell: "Kettlebell",
+      barbell: "Barbell",
+      bodyweight: "Bodyweight",
+      zone2: "Zone 2",
+      loadedMobility: "Loaded Mobility",
+      generalMobility: "General Mobility",
+      mobility: "Mobility"
+    };
+
+    const ZONE2_PLAN = {
+      name: "Zone 2",
+      minutes: [30, 40, 45],
+      modalities: ["Crosstrainer", "Easy running", "Cycling", "Incline walking", "Rowing"],
+      format: [
+        "Stable aerobic pace.",
+        "Smooth enough to finish fresher than you started.",
+        "Grip, bracing or burn should not become the limiter."
+      ]
+    };
+
+    const BODYWEIGHT_BLOCKS = [
+      { id: "body-a", dice: "1-2-3", title: "Bodyweight A", lifts: ["One-arm One-leg Push Up", "Front Lever / Hanging Leg Raise", "Top Down Pistol"] },
+      { id: "body-b", dice: "4-5-6", title: "Bodyweight B", lifts: ["Handstand Push Up", "Tactical Pull Up", "Pistol Squat"] }
+    ];
+
+    const BARBELL_BLOCKS = [
+      { id: "bar-a", dice: "1-2", title: "Barbell A", lifts: ["Back Squat", "Bench Press", "Sumo Deadlift"] },
+      { id: "bar-b", dice: "3-4", title: "Barbell B", lifts: ["Front Squat", "Incline Bench Press", "Conventional Deadlift"] },
+      { id: "bar-c", dice: "5-6", title: "Barbell C", lifts: ["Zercher Squat", "Military Press", "Goodmorning"] }
+    ];
+
+    const KB_PATTERNS = [
+      {
+        key: "swing", label: "Swing Pattern", accentable: true,
+        lifts: [
+          { name: "One-Legged Deadlift", type: "grind" },
+          { name: "Double Sumo Deadlift", type: "grind" },
+          { name: "Single Leg Glute Bridge", type: "grind" },
+          { name: "One-arm Swing", type: "singleQuick" },
+          { name: "Side Stepping Two-arm Swing", type: "singleQuick" },
+          { name: "Double Swing", type: "doubleQuick" }
+        ]
+      },
+      {
+        key: "getup", label: "Get Up Pattern", accentable: true,
+        lifts: [
+          { name: "3 Minute Get Up", type: "timed" },
+          { name: "Supine to Sit Up", type: "grind" },
+          { name: "Windmill", type: "grind" },
+          { name: "Bent Press", type: "grind" },
+          { name: "Supine to Half Kneel", type: "grind" },
+          { name: "Half Kneel to Stand", type: "grind" }
+        ]
+      },
+      {
+        key: "clean", label: "Clean Pattern", accentable: true,
+        lifts: [
+          { name: "HS-Plank", type: "seconds" },
+          { name: "Front Rack Carry", type: "distance" },
+          { name: "Single Dead Clean", type: "singleQuick" },
+          { name: "Double Clean", type: "doubleQuick" },
+          { name: "Pullover", type: "grind" },
+          { name: "One-arm Row", type: "grind" }
+        ]
+      },
+      {
+        key: "squat", label: "Squat Pattern", accentable: true,
+        lifts: [
+          { name: "B-stance Goblet Squat", type: "grind" },
+          { name: "Single Front Squat", type: "grind" },
+          { name: "Paused Front Squat", type: "grind" },
+          { name: "Double Front Squat", type: "grind" },
+          { name: "Athletic Lunge", type: "grind" },
+          { name: "Bottom Up Squat", type: "grind" }
+        ]
+      },
+      {
+        key: "press", label: "Press Pattern", accentable: true,
+        lifts: [
+          { name: "Military Press", type: "grind" },
+          { name: "Top Down Press", type: "grind" },
+          { name: "Half Kneeling Press", type: "grind" },
+          { name: "Floor Press", type: "grind" },
+          { name: "Double Push Press", type: "doubleQuick" },
+          { name: "Double Push Jerk", type: "doubleQuick" }
+        ]
+      },
+      {
+        key: "snatch", label: "Snatch Pattern", accentable: true,
+        lifts: [
+          { name: "Overhead Carry", type: "distance" },
+          { name: "Snatch", type: "singleQuick" },
+          { name: "Low Pull Snatch", type: "singleQuick" },
+          { name: "High Pull", type: "singleQuick" },
+          { name: "Front/Side Raise Snatch", type: "singleQuick" },
+          { name: "Double Snatch", type: "doubleQuick" }
+        ]
+      },
+      {
+        key: "hybrid", label: "Hybrid Pattern", accentable: false,
+        lifts: [
+          { name: "Double Clean & Press", type: "doubleQuick" },
+          { name: "Double Clean & Front Squat", type: "doubleQuick" },
+          { name: "Double Snatch & Overhead Walk", type: "doubleQuick" },
+          { name: "Double Clean & Jerk", type: "doubleQuick" },
+          { name: "Double Snatch & Press", type: "doubleQuick" },
+          { name: "Double Front Squat & Push Press", type: "doubleQuick" }
+        ]
+      }
+    ];
+
+    const VOLUME_PRESETS = {
+      low: { low: 10, medium: 20, high: 30 },
+      medium: { low: 15, medium: 25, high: 40 },
+      high: { low: 20, medium: 30, high: 50 }
+    };
+
+    const KB_TOTALS = {
+      grind: VOLUME_PRESETS,
+      seconds: VOLUME_PRESETS,
+      distance: VOLUME_PRESETS,
+      singleQuick: {
+        low: { low: 50, medium: 100, high: 150 },
+        medium: { low: 75, medium: 125, high: 175 },
+        high: { low: 100, medium: 150, high: 200 }
+      },
+      doubleQuick: {
+        low: { low: 10, medium: 20, high: 40 },
+        medium: { low: 15, medium: 30, high: 50 },
+        high: { low: 20, medium: 40, high: 60 }
+      }
+    };
+
+    const PER_SET = {
+      grind: "1-5 / set",
+      singleQuick: "10-20 / set",
+      doubleQuick: "5-10 / set",
+      seconds: "seconds",
+      distance: "meters",
+      timed: "quality"
+    };
+
+    const KB_VOLUME = {
+      timed: { low: "3 min", medium: "3-6 min", high: "6-9 min" }
+    };
+
+    const LOADED_MOBILITY = [
+      "30s Arm Bar",
+      "2/3 Bent Arm Bar",
+      "3/5 Rib Pull",
+      "3/5 Bretzel",
+      "3/5 Windmill",
+      "3/3 Bent Press",
+      "5/10 Pump Stretch",
+      "5/10 Tactical Frog",
+      "5/10 CatCow",
+      "10 Overhead Hip Flexor Stretch",
+      "5 Prying Goblet Squat",
+      "3/5 Cossack Squat",
+      "5/10 Goodmorning Hamstring Stretch",
+      "5/10 Kettlebell Pull over",
+      "3/5 Get Up High Bridge",
+      "5 Tall kneeling Halo",
+      "3 Tall Kneeling Rotations"
+    ];
+
+    const GENERAL_MOBILITY = [
+      "Hips - Figure 4 position",
+      "Hips - Figure 4 lunge",
+      "Hips - Half heel sit",
+      "Hips - Z position switches",
+      "Hips - Z position side roll",
+      "Hips - Prone to TGU to Bridge",
+      "Shoulders - Egyptian",
+      "Shoulders - S movement",
+      "Shoulders - Figure 8 in crawl",
+      "Shoulders - Crawl to crab",
+      "Shoulders - Pike to tabletop",
+      "Ankles - Up & down",
+      "Ankles - In & out",
+      "Ankles - Rotations",
+      "Ankles - Figure 8 toes and ankle",
+      "Ankles - Snail",
+      "Ankles - Crawl-frog-crab transitions",
+      "Spine & Neck - Supine neck rolls",
+      "Spine & Neck - Hand on knee rolling",
+      "Spine & Neck - Segmental rolling",
+      "Spine & Neck - Forward and backward rolling",
+      "Wrists - Finger waves",
+      "Wrists - Hand circles",
+      "Wrists - Tea pot"
+    ];
+
+    let state = loadState();
+    let activeTab = "today";
+
+    function createDefaultState() {
+      return {
+        appVersion: APP_VERSION,
+        settings: { kettlebell: true, barbell: true, bodyweight: true, volume: "low" },
+        readiness: {},
+        todayPlan: null,
+        history: [],
+        rotations: {
+          modalityBag: [],
+          bodyweightBag: [],
+          barbellBag: [],
+          kbAccentBag: [],
+          kbLiftBags: {},
+          zone2Index: 0
+        },
+        lastStrengthModality: null,
+        lastKbAccent: null,
+        lastBarbellAccent: null,
+        lastBodyweightAccent: null,
+        barbell: { weights: {}, nudges: {} }
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return createDefaultState();
+        return mergeState(JSON.parse(raw));
+      } catch (error) {
+        return createDefaultState();
+      }
+    }
+
+    function mergeState(saved) {
+      const base = createDefaultState();
+      return {
+        ...base,
+        ...saved,
+        settings: { ...base.settings, ...(saved.settings || {}) },
+        readiness: { ...base.readiness, ...(saved.readiness || {}) },
+        rotations: { ...base.rotations, ...(saved.rotations || {}), kbLiftBags: { ...base.rotations.kbLiftBags, ...((saved.rotations || {}).kbLiftBags || {}) } },
+        barbell: { ...base.barbell, ...(saved.barbell || {}), weights: { ...base.barbell.weights, ...((saved.barbell || {}).weights || {}) }, nudges: { ...base.barbell.nudges, ...((saved.barbell || {}).nudges || {}) } }
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function todayKey() {
+      return dateKey(new Date());
+    }
+
+    function dateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return year + "-" + month + "-" + day;
+    }
+
+    function addDays(key, offset) {
+      const date = new Date(key + "T12:00:00");
+      date.setDate(date.getDate() + offset);
+      return dateKey(date);
+    }
+
+    function getEntriesBetween(daysAgo) {
+      const now = new Date(todayKey() + "T12:00:00");
+      const start = new Date(now);
+      start.setDate(start.getDate() - daysAgo);
+      return state.history.filter((item) => {
+        const d = new Date(item.dateKey + "T12:00:00");
+        return d >= start && d <= now;
+      });
+    }
+
+    function hasSessionOn(date, sessionType) {
+      return state.history.some((item) => item.dateKey === date && item.sessionType === sessionType);
+    }
+
+    function latestStrength() {
+      return state.history.find((item) => item.sessionType === "strength" && item.modality);
+    }
+
+    function ensureTodayPlan() {
+      const key = todayKey();
+      if (state.todayPlan && state.todayPlan.dateKey === key) {
+        if (!state.readiness[key] || !state.readiness[key].total) {
+          if (state.todayPlan.sessionType === "check") return state.todayPlan;
+        } else {
+          return state.todayPlan;
+        }
+      }
+      if (state.todayPlan && state.todayPlan.dateKey === key && state.todayPlan.sessionType === "check") {
+        return state.todayPlan;
+      }
+      state.todayPlan = generatePlan(key);
+      saveState();
+      return state.todayPlan;
+    }
+
+    function generatePlan(key) {
+      const check = state.readiness[key];
+      if (!check || !check.total) {
+        return {
+          dateKey: key,
+          sessionType: "check",
+          title: "Readiness",
+          subtitle: "",
+          summary: "",
+          items: []
+        };
+      }
+
+      if (check.total >= 9 && check.total <= 10) {
+        return generateZone2Plan(key);
+      }
+      if (check.total >= 6 && check.total <= 8) {
+        return generateLoadedMobilityPlan(key);
+      }
+      if (check.total <= 5) {
+        return generateGeneralMobilityPlan(key);
+      }
+
+      const pastSeven = getEntriesBetween(7);
+      const didZone2 = pastSeven.some((item) => item.sessionType === "zone2");
+      if (check.total === 10 && !didZone2) {
+        return generateZone2Plan(key);
+      }
+
+      const strengthPlan = generateStrengthPlan(key);
+      if (strengthPlan) return strengthPlan;
+      return generateGeneralMobilityPlan(key);
+    }
+
+    function weightedBaseModalities() {
+      const items = [];
+      if (state.settings.bodyweight) items.push("bodyweight", "bodyweight");
+      if (state.settings.kettlebell) items.push("kettlebell", "kettlebell", "kettlebell");
+      if (state.settings.barbell) items.push("barbell");
+      return items;
+    }
+
+    function generateStrengthPlan(key) {
+      const base = weightedBaseModalities();
+      if (!base.length) return null;
+      const last = latestStrength();
+      const lastModality = last ? last.modality : state.lastStrengthModality;
+      let candidates = base.filter((item) => item !== lastModality);
+      if (!candidates.length) {
+        return {
+          dateKey: key || todayKey(),
+          sessionType: "generalMobility",
+          title: "General Mobility",
+          subtitle: "Repeat lockout.",
+          summary: "",
+          items: shuffle(GENERAL_MOBILITY).slice(0, 8).map((name) => ({ name, detail: "Easy practice" }))
+        };
+      }
+      const modality = drawFromBag("modalityBag", candidates, candidates);
+      if (modality === "kettlebell") return generateKettlebellPlan();
+      if (modality === "barbell") return generateBarbellPlan();
+      return generateBodyweightPlan();
+    }
+
+    function drawFromBag(bagKey, allItems, allowedItems) {
+      let bag = state.rotations[bagKey] || [];
+      bag = bag.filter((item) => allowedItems.includes(item));
+      if (!bag.length) bag = shuffle(allItems).filter((item) => allowedItems.includes(item));
+      const picked = bag.shift();
+      state.rotations[bagKey] = bag;
+      return picked;
+    }
+
+    function drawKbLift(pattern) {
+      const allNames = pattern.lifts.map((lift) => lift.name);
+      let bag = state.rotations.kbLiftBags[pattern.key] || [];
+      bag = bag.filter((name) => allNames.includes(name));
+      if (!bag.length) bag = shuffle(allNames);
+      const name = bag.shift();
+      state.rotations.kbLiftBags[pattern.key] = bag;
+      return pattern.lifts.find((lift) => lift.name === name);
+    }
+
+    function generateKettlebellPlan() {
+      const accentable = KB_PATTERNS.filter((pattern) => pattern.accentable).map((pattern) => pattern.key);
+      const allowedAccent = accentable.filter((key) => key !== state.lastKbAccent);
+      const accentKey = drawFromBag("kbAccentBag", accentable, allowedAccent.length ? allowedAccent : accentable);
+      const previousAccent = state.lastKbAccent;
+      const items = shuffle(KB_PATTERNS).map((pattern) => {
+        const lift = drawKbLift(pattern);
+        let volume = "medium";
+        if (pattern.key === accentKey) volume = "high";
+        if (pattern.key === previousAccent || pattern.key === "hybrid") volume = "low";
+        const target = getKbTarget(lift.type, volume);
+        return {
+          pattern: pattern.label,
+          patternKey: pattern.key,
+          name: lift.name,
+          liftType: lift.type,
+          volume,
+          target,
+          dose: formatKbDose(lift.type, volume),
+          perSet: PER_SET[lift.type],
+          done: 0,
+          accent: pattern.key === accentKey,
+          previousLow: pattern.key === previousAccent,
+          hybrid: pattern.key === "hybrid"
+        };
+      });
+
+      return {
+        dateKey: todayKey(),
+        sessionType: "strength",
+        modality: "kettlebell",
+        title: "Kettlebell Exhibition",
+        subtitle: "One high / previous low / medium.",
+        summary: "",
+        accentKey,
+        previousAccent,
+        items
+      };
+    }
+
+    function formatKbDose(type, volume) {
+      const value = getKbTarget(type, volume);
+      if (type === "timed") return value + " quality";
+      if (type === "seconds") return (volume === "high" ? value + "+" : value) + " sec";
+      if (type === "distance") return (volume === "high" ? value + "+" : value) + " m";
+      return (volume === "high" ? value + "+" : value) + " total reps";
+    }
+
+    function getKbTarget(type, volume) {
+      if (type === "timed") return KB_VOLUME.timed[volume];
+      const preset = KB_TOTALS[type] || KB_TOTALS.grind;
+      const value = (preset[state.settings.volume] || preset.low)[volume];
+      return type === "distance" ? value * 3 : value;
+    }
+
+    function generateBarbellPlan() {
+      const block = drawBlock("barbellBag", BARBELL_BLOCKS);
+      const volumeItems = assignStrengthVolumes(block.lifts, state.lastBarbellAccent);
+      return {
+        dateKey: todayKey(),
+        sessionType: "strength",
+        modality: "barbell",
+        title: block.title,
+        subtitle: getStrengthDoseLabel(),
+        summary: "",
+        dice: block.dice,
+        accentLift: volumeItems.accentLift,
+        previousAccentLift: state.lastBarbellAccent,
+        items: shuffle(volumeItems.items).map((item) => ({
+          ...item,
+          target: getStrengthTarget(item.volume),
+          prescription: formatStrengthDose(item.volume),
+          perSet: PER_SET.grind,
+          done: 0,
+          weight: state.barbell.weights[item.name] || "",
+          nudge: state.barbell.nudges[item.name] || 0
+        }))
+      };
+    }
+
+    function generateBodyweightPlan() {
+      const block = drawBlock("bodyweightBag", BODYWEIGHT_BLOCKS);
+      const volumeItems = assignStrengthVolumes(block.lifts, state.lastBodyweightAccent);
+      return {
+        dateKey: todayKey(),
+        sessionType: "strength",
+        modality: "bodyweight",
+        title: block.title,
+        subtitle: getStrengthDoseLabel(),
+        summary: "",
+        dice: block.dice,
+        accentLift: volumeItems.accentLift,
+        previousAccentLift: state.lastBodyweightAccent,
+        items: shuffle(volumeItems.items).map((item) => ({
+          ...item,
+          target: getStrengthTarget(item.volume),
+          prescription: formatStrengthDose(item.volume),
+          perSet: PER_SET.grind,
+          done: 0
+        }))
+      };
+    }
+
+    function assignStrengthVolumes(lifts, previousAccent) {
+      const allowedAccent = lifts.filter((name) => name !== previousAccent);
+      const accentLift = shuffle(allowedAccent.length ? allowedAccent : lifts)[0];
+      return {
+        accentLift,
+        items: lifts.map((name) => {
+          let volume = "medium";
+          if (name === accentLift) volume = "high";
+          if (name === previousAccent) volume = "low";
+          return {
+            name,
+            volume,
+            dose: formatStrengthDose(volume),
+            accent: name === accentLift,
+            previousLow: name === previousAccent
+          };
+        })
+      };
+    }
+
+    function formatStrengthDose(volume) {
+      const reps = getStrengthTarget(volume);
+      return volume === "high" ? reps + "+ total reps" : reps + " total reps";
+    }
+
+    function getStrengthTarget(volume) {
+      return getVolumePreset()[volume];
+    }
+
+    function getStrengthDoseLabel() {
+      const preset = getVolumePreset();
+      return preset.low + " / " + preset.medium + " / " + preset.high + "+ total reps.";
+    }
+
+    function getVolumePreset() {
+      return VOLUME_PRESETS[state.settings.volume] || VOLUME_PRESETS.low;
+    }
+
+    function drawBlock(bagKey, blocks) {
+      const ids = blocks.map((block) => block.id);
+      const id = drawFromBag(bagKey, ids, ids);
+      return blocks.find((block) => block.id === id) || blocks[0];
+    }
+
+    function generateZone2Plan(key) {
+      const index = state.rotations.zone2Index % ZONE2_PLAN.modalities.length;
+      const minute = ZONE2_PLAN.minutes[state.rotations.zone2Index % ZONE2_PLAN.minutes.length];
+      state.rotations.zone2Index += 1;
+      return {
+        dateKey: key || todayKey(),
+        sessionType: "zone2",
+        title: "Zone 2",
+        subtitle: minute + " minutes " + ZONE2_PLAN.modalities[index],
+        summary: "",
+        items: ZONE2_PLAN.format.map((name) => ({ name, detail: "Keep it easy" }))
+      };
+    }
+
+    function generateLoadedMobilityPlan(key) {
+      return {
+        dateKey: key || todayKey(),
+        sessionType: "loadedMobility",
+        title: "Loaded Mobility",
+        subtitle: "15-30 minutes.",
+        summary: "",
+        items: shuffle(LOADED_MOBILITY).slice(0, 8).map((name) => ({ name, detail: "Easy practice" }))
+      };
+    }
+
+    function generateGeneralMobilityPlan(key) {
+      return {
+        dateKey: key || todayKey(),
+        sessionType: "generalMobility",
+        title: "General Mobility",
+        subtitle: "15-30 minutes.",
+        summary: "",
+        items: shuffle(GENERAL_MOBILITY).slice(0, 8).map((name) => ({ name, detail: "Easy practice" }))
+      };
+    }
+
+    function shuffle(array) {
+      const copy = array.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(key) {
+      const date = new Date(key + "T12:00:00");
+      return date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    }
+
+    function isTodayDone() {
+      return state.history.some((item) => item.dateKey === todayKey());
+    }
+
+    function render() {
+      syncToggles();
+      renderToday();
+      renderLog();
+      switchTab(activeTab);
+    }
+
+    function renderToday() {
+      const view = document.getElementById("todayView");
+      const plan = ensureTodayPlan();
+      const done = isTodayDone();
+      if (plan.sessionType === "check") {
+        view.innerHTML = renderReadinessCheck(plan);
+        bindReadinessControls();
+        return;
+      }
+      view.innerHTML = `
+        <article class="card main-card ${done ? "done" : ""}">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">${escapeHtml(formatDate(plan.dateKey))}</p>
+              <h2>${escapeHtml(plan.title)}</h2>
+              ${plan.subtitle ? `<p class="muted">${escapeHtml(plan.subtitle)}</p>` : ""}
+            </div>
+            <div class="badge ${badgeClass(plan)}">${escapeHtml(SESSION_LABELS[plan.modality] || SESSION_LABELS[plan.sessionType] || plan.sessionType)}</div>
+          </div>
+          ${plan.summary ? `<p class="muted">${escapeHtml(plan.summary)}</p>` : ""}
+          ${renderPlanMeta(plan)}
+          <div class="grid session-list" style="margin-top: 14px;">
+            ${renderPlanItems(plan)}
+          </div>
+          <div class="button-row" style="margin-top: 16px;">
+            <button class="primary" type="button" id="finishButton" ${done ? "disabled" : ""}>${done ? "Done" : "Complete"}</button>
+            <button class="secondary" type="button" id="rerollButton" ${done ? "disabled" : ""}>Reroll</button>
+          </div>
+        </article>
+      `;
+
+      document.getElementById("finishButton").addEventListener("click", finishToday);
+      document.getElementById("rerollButton").addEventListener("click", rerollToday);
+      bindBarbellControls();
+      bindRepTrackers();
+    }
+
+    function renderReadinessCheck(plan) {
+      const saved = state.readiness[plan.dateKey] || {};
+      return `
+        <article class="card main-card">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">${escapeHtml(formatDate(plan.dateKey))}</p>
+              <h2>Readiness</h2>
+            </div>
+          </div>
+          <div class="check-grid">
+            ${renderScoreControl("energy", "Energy", saved.energy)}
+            ${renderScoreControl("body", "Body", saved.body)}
+            ${renderScoreControl("mind", "Mind", saved.mind)}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderScoreControl(key, label, value) {
+      return `
+        <section class="lift-card">
+          <p class="kicker">${escapeHtml(label)}</p>
+          <div class="score-row">
+            ${[1, 2, 3, 4, 5].map((score) => `
+              <button class="score-button ${Number(value) === score ? "active" : ""}" type="button" data-score-key="${escapeHtml(key)}" data-score="${score}">${score}</button>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function bindReadinessControls() {
+      document.querySelectorAll("[data-score-key]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const key = button.getAttribute("data-score-key");
+          const score = Number(button.getAttribute("data-score"));
+          const date = todayKey();
+          const current = state.readiness[date] || {};
+          current[key] = score;
+          const total = Number(current.energy || 0) + Number(current.body || 0) + Number(current.mind || 0);
+          current.total = current.energy && current.body && current.mind ? total : 0;
+          state.readiness[date] = current;
+          state.todayPlan = current.total ? generatePlan(date) : { dateKey: date, sessionType: "check", title: "Readiness", subtitle: "", summary: "", items: [] };
+          saveState();
+          render();
+        });
+      });
+    }
+
+    function badgeClass(plan) {
+      if (plan.sessionType === "strength") return "red";
+      if (plan.sessionType === "zone2") return "green";
+      return "gold";
+    }
+
+    function renderPlanMeta(plan) {
+      const parts = [];
+      const week = getEntriesBetween(7);
+      const check = state.readiness[plan.dateKey];
+      if (check && check.total) parts.push(`<span class="badge">Readiness: ${escapeHtml(check.total + "/15")}</span>`);
+      parts.push(`<span class="badge">Strength: ${week.filter((item) => item.sessionType === "strength").length}/3</span>`);
+      if (plan.modality) parts.push(`<span class="badge red">${escapeHtml(SESSION_LABELS[plan.modality])}</span>`);
+      if (plan.accentKey) {
+        const pattern = KB_PATTERNS.find((item) => item.key === plan.accentKey);
+        parts.push(`<span class="badge gold">Accent: ${escapeHtml(pattern ? pattern.label : plan.accentKey)}</span>`);
+      }
+      if (plan.accentLift) parts.push(`<span class="badge gold">Accent: ${escapeHtml(plan.accentLift)}</span>`);
+      if (plan.dice) parts.push(`<span class="badge">Roll: ${escapeHtml(plan.dice)}</span>`);
+      return `<div class="badge-row">${parts.join("")}</div>`;
+    }
+
+    function renderPlanItems(plan) {
+      if (!plan.items || !plan.items.length) return `<div class="empty">No items.</div>`;
+      if (plan.modality === "kettlebell") {
+        return plan.items.map((item) => `
+          <section class="lift-card ${item.accent ? "accent-card" : ""} ${item.previousLow ? "low-card" : ""} ${item.hybrid ? "hybrid-card" : ""}">
+            <div class="lift-top">
+              <div>
+                <p class="kicker">${escapeHtml(item.pattern)}</p>
+                <p class="lift-name">${escapeHtml(item.name)}</p>
+              </div>
+              <span class="dose">${escapeHtml(item.dose)}</span>
+            </div>
+            <div class="subdose">${escapeHtml(item.perSet || "")}</div>
+            <div class="quiet">${escapeHtml(volumeLabel(item))}</div>
+            ${renderRepTracker(item)}
+          </section>
+        `).join("");
+      }
+      if (plan.modality === "barbell") {
+        return plan.items.map((item) => `
+          <section class="lift-card ${item.accent ? "accent-card" : ""} ${item.previousLow ? "low-card" : ""}">
+            <div class="lift-top">
+              <div>
+                <p class="kicker">${escapeHtml(item.prescription)}</p>
+                <p class="lift-name">${escapeHtml(item.name)}</p>
+              </div>
+              <span class="dose">${escapeHtml(item.dose)}</span>
+            </div>
+            <div class="subdose">${escapeHtml(item.perSet || "")}</div>
+            <div class="mini-row">
+              <label class="field" style="flex: 1 1 160px;">
+                <span>Load</span>
+                <input type="number" inputmode="decimal" step="0.5" min="0" data-weight="${escapeHtml(item.name)}" value="${escapeHtml(item.weight)}">
+              </label>
+              <button class="nudge ${item.nudge < 0 ? "active-minus" : ""}" type="button" data-nudge="${escapeHtml(item.name)}" data-value="-1">-</button>
+              <button class="nudge ${item.nudge > 0 ? "active-plus" : ""}" type="button" data-nudge="${escapeHtml(item.name)}" data-value="1">+</button>
+            </div>
+            <div class="quiet">${escapeHtml(volumeLabel(item))}</div>
+            ${renderRepTracker(item)}
+          </section>
+        `).join("");
+      }
+      if (plan.modality === "bodyweight") {
+        return plan.items.map((item) => `
+          <section class="lift-card ${item.accent ? "accent-card" : ""} ${item.previousLow ? "low-card" : ""}">
+            <div class="lift-top">
+              <div>
+                <p class="kicker">${escapeHtml(item.prescription)}</p>
+                <p class="lift-name">${escapeHtml(item.name)}</p>
+              </div>
+              <span class="dose">${escapeHtml(item.dose)}</span>
+            </div>
+            <div class="subdose">${escapeHtml(item.perSet || "")}</div>
+            <div class="quiet">${escapeHtml(volumeLabel(item))}</div>
+            ${renderRepTracker(item)}
+          </section>
+        `).join("");
+      }
+      return plan.items.map((item) => `
+        <section class="lift-card">
+          <p class="kicker">${escapeHtml(item.prescription || item.detail || "Practice")}</p>
+          <p class="lift-name">${escapeHtml(item.name)}</p>
+        </section>
+      `).join("");
+    }
+
+    function volumeLabel(item) {
+      if (item.hybrid) return "Low";
+      if (item.previousLow) return "Previous high: low";
+      if (item.accent) return "High";
+      return "Medium";
+    }
+
+    function nudgeText(nudge) {
+      if (nudge > 0) return "+ next";
+      if (nudge < 0) return "- next";
+      return "";
+    }
+
+    function renderRepTracker(item) {
+      const done = Number(item.done) || 0;
+      const unit = getTrackerUnit(item);
+      const target = item.target && typeof item.target === "number" ? " / " + formatTrackerValue(item, item.target) : "";
+      return `
+        <div class="rep-tracker">
+          <span class="quiet">Done</span>
+          <span class="rep-count">${escapeHtml(formatTrackerValue(item, done) + target + unit)}</span>
+          <button class="nudge" type="button" data-rep="${escapeHtml(item.name)}" data-step="${escapeHtml(-getTrackerStep(item))}">-</button>
+          <button class="nudge" type="button" data-rep="${escapeHtml(item.name)}" data-step="${escapeHtml(getTrackerStep(item))}">+</button>
+        </div>
+      `;
+    }
+
+    function getTrackerUnit(item) {
+      if (item.liftType === "seconds") return " sec";
+      if (item.liftType === "distance") return " m";
+      return "";
+    }
+
+    function getTrackerStep(item) {
+      if (item.liftType === "distance") return 3;
+      return 1;
+    }
+
+    function formatTrackerValue(item, value) {
+      return value;
+    }
+
+    function formatLoggedDone(item) {
+      const done = Number(item.done) || 0;
+      return formatTrackerValue(item, done);
+    }
+
+    function bindBarbellControls() {
+      document.querySelectorAll("[data-weight]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const lift = input.getAttribute("data-weight");
+          state.barbell.weights[lift] = input.value;
+          if (state.todayPlan && state.todayPlan.modality === "barbell") {
+            const item = state.todayPlan.items.find((x) => x.name === lift);
+            if (item) item.weight = input.value;
+          }
+          saveState();
+        });
+      });
+
+      document.querySelectorAll("[data-nudge]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const lift = button.getAttribute("data-nudge");
+          const value = Number(button.getAttribute("data-value"));
+          const current = state.barbell.nudges[lift] || 0;
+          state.barbell.nudges[lift] = current === value ? 0 : value;
+          if (state.todayPlan && state.todayPlan.modality === "barbell") {
+            const item = state.todayPlan.items.find((x) => x.name === lift);
+            if (item) item.nudge = state.barbell.nudges[lift];
+          }
+          saveState();
+          renderToday();
+        });
+      });
+    }
+
+    function bindRepTrackers() {
+      document.querySelectorAll("[data-rep]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!state.todayPlan || !Array.isArray(state.todayPlan.items)) return;
+          const name = button.getAttribute("data-rep");
+          const step = Number(button.getAttribute("data-step")) || 0;
+          const item = state.todayPlan.items.find((entry) => entry.name === name);
+          if (!item) return;
+          item.done = Math.max(0, (Number(item.done) || 0) + step);
+          saveState();
+          renderToday();
+        });
+      });
+    }
+
+    function finishToday() {
+      if (isTodayDone()) return;
+      const plan = ensureTodayPlan();
+      const entry = {
+        id: "entry-" + Date.now(),
+        dateKey: todayKey(),
+        completedAt: new Date().toISOString(),
+        sessionType: plan.sessionType,
+        modality: plan.modality || null,
+        title: plan.title,
+        summary: summarizePlan(plan),
+        accentKey: plan.accentKey || null,
+        accentLift: plan.accentLift || null
+      };
+      state.history.unshift(entry);
+      state.history = state.history.slice(0, 120);
+      if (plan.sessionType === "strength") {
+        state.lastStrengthModality = plan.modality;
+      }
+      if (plan.modality === "kettlebell" && plan.accentKey) {
+        state.lastKbAccent = plan.accentKey;
+      }
+      if (plan.modality === "barbell" && plan.accentLift) {
+        state.lastBarbellAccent = plan.accentLift;
+      }
+      if (plan.modality === "bodyweight" && plan.accentLift) {
+        state.lastBodyweightAccent = plan.accentLift;
+      }
+      saveState();
+      launchConfetti();
+      render();
+    }
+
+    function launchConfetti() {
+      const layer = document.getElementById("confettiLayer");
+      if (!layer) return;
+      layer.innerHTML = "";
+      const colors = ["#d7b46a", "#b3442d", "#f4efe2", "#7ea36a", "#80786b"];
+      for (let index = 0; index < 54; index += 1) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colors[index % colors.length];
+        piece.style.setProperty("--fall", 1800 + Math.random() * 1500 + "ms");
+        piece.style.setProperty("--drift", (Math.random() * 44 - 22).toFixed(1) + "vw");
+        piece.style.setProperty("--spin", Math.round(Math.random() * 760 - 380) + "deg");
+        piece.style.animationDelay = Math.random() * 120 + "ms";
+        layer.appendChild(piece);
+      }
+      window.setTimeout(() => {
+        layer.innerHTML = "";
+      }, 3600);
+    }
+
+    function summarizePlan(plan) {
+      if (!plan.items) return plan.summary || "";
+      if (plan.modality === "kettlebell") {
+        return plan.items.map((item) => item.pattern + ": " + item.name + " (" + formatLoggedDone(item) + "/" + item.dose + ")").join(" | ");
+      }
+      if (plan.modality === "barbell") {
+        return plan.items.map((item) => item.name + " " + formatLoggedDone(item) + "/" + item.dose + (item.weight ? " @ " + item.weight : "")).join(" | ");
+      }
+      if (plan.modality === "bodyweight") {
+        return plan.items.map((item) => item.name + " " + formatLoggedDone(item) + "/" + item.dose).join(" | ");
+      }
+      return plan.items.map((item) => item.name).join(" | ");
+    }
+
+    function rerollToday() {
+      if (isTodayDone()) return;
+      state.todayPlan = generatePlan(todayKey());
+      saveState();
+      renderToday();
+    }
+
+    function renderLog() {
+      const view = document.getElementById("logView");
+      const history = state.history.length
+        ? state.history.slice(0, 20).map((item) => `
+          <article class="history-item">
+            <strong>${escapeHtml(item.title)} - ${escapeHtml(formatDate(item.dateKey))}</strong>
+            <div class="quiet">${escapeHtml(SESSION_LABELS[item.modality] || SESSION_LABELS[item.sessionType] || item.sessionType)}</div>
+            <p class="muted" style="margin: 8px 0 0;">${escapeHtml(item.summary || "")}</p>
+          </article>
+        `).join("")
+        : `<div class="empty">No log yet.</div>`;
+
+      view.innerHTML = `
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>Log</h2>
+            </div>
+          </div>
+          <div class="history-list">${history}</div>
+        </article>
+
+        <details>
+          <summary>Maintenance</summary>
+          <div class="grid two" style="margin-top: 14px;">
+            <label class="field">
+              <span>Date</span>
+              <input type="date" id="backfillDate" value="${escapeHtml(addDays(todayKey(), -1))}">
+            </label>
+            <label class="field">
+              <span>Session</span>
+              <select id="backfillType">
+                <option value="strength">Strength</option>
+                <option value="zone2">Zone 2</option>
+                <option value="loadedMobility">Loaded Mobility</option>
+                <option value="generalMobility">General Mobility</option>
+              </select>
+            </label>
+          </div>
+          <div class="button-row" style="margin-top: 14px;">
+            <button class="secondary" type="button" id="backfillButton">Add session</button>
+            <button class="ghost" type="button" id="resetButton">Reset</button>
+          </div>
+        </details>
+      `;
+
+      document.getElementById("backfillButton").addEventListener("click", backfill);
+      document.getElementById("resetButton").addEventListener("click", resetAll);
+    }
+
+    function backfill() {
+      const date = document.getElementById("backfillDate").value;
+      const type = document.getElementById("backfillType").value;
+      if (!date || !type) return;
+      state.history.unshift({
+        id: "backfill-" + Date.now(),
+        dateKey: date,
+        completedAt: new Date().toISOString(),
+        sessionType: type,
+        modality: type === "strength" ? "backfill" : null,
+        title: "Backfill " + (SESSION_LABELS[type] || type),
+        summary: "Added manually."
+      });
+      state.todayPlan = null;
+      saveState();
+      render();
+    }
+
+    function resetAll() {
+      if (!window.confirm("Reset all data?")) return;
+      state = createDefaultState();
+      saveState();
+      render();
+    }
+
+    function syncToggles() {
+      document.getElementById("toggleKettlebell").checked = !!state.settings.kettlebell;
+      document.getElementById("toggleBarbell").checked = !!state.settings.barbell;
+      document.getElementById("toggleBodyweight").checked = !!state.settings.bodyweight;
+      document.querySelectorAll("[data-volume]").forEach((button) => {
+        button.classList.toggle("active", button.getAttribute("data-volume") === state.settings.volume);
+      });
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.classList.toggle("active", button.getAttribute("data-tab") === tab);
+      });
+      document.getElementById("todayView").classList.toggle("active", tab === "today");
+      document.getElementById("logView").classList.toggle("active", tab === "log");
+    }
+
+    document.querySelectorAll(".tab").forEach((button) => {
+      button.addEventListener("click", () => switchTab(button.getAttribute("data-tab")));
+    });
+
+    [
+      ["toggleKettlebell", "kettlebell"],
+      ["toggleBarbell", "barbell"],
+      ["toggleBodyweight", "bodyweight"]
+    ].forEach(([id, key]) => {
+      document.getElementById(id).addEventListener("change", (event) => {
+        state.settings[key] = event.target.checked;
+        state.todayPlan = null;
+        saveState();
+        render();
+      });
+    });
+
+    document.querySelectorAll("[data-volume]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const volume = button.getAttribute("data-volume");
+        if (!VOLUME_PRESETS[volume]) return;
+        state.settings.volume = volume;
+        state.todayPlan = null;
+        saveState();
+        render();
+      });
+    });
+
+    if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
