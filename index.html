@@ -798,6 +798,12 @@
       high: { low: 20, medium: 25, high: 30 }
     };
 
+    const BARBELL_LADDERS = {
+      low: { dose: "2-3 x 1-2-3", target: 18, load: "@ 5-6RM feel" },
+      medium: { dose: "2 x 1-2-3-4", target: 20, load: "@ 7-9RM feel" },
+      high: { dose: "2 x 1-2-3-4-5", target: 30, load: "@ 10-12RM feel" }
+    };
+
     const PROGRESSION_BAG = ["low", "low", "medium", "medium", "medium", "high"];
     const PROGRESSION_BASES = ["low", "medium", "high"];
 
@@ -1098,6 +1104,13 @@
         if (index >= 0) bag.splice(index, 1);
         let base = current.base;
         if (!bag.length) {
+          if (update.modality === "barbell") {
+            state.progression.lifts[update.key] = {
+              base: "low",
+              bag: shuffle(PROGRESSION_BAG)
+            };
+            return;
+          }
           if (base === "high") {
             completed.push(update);
             base = handleProgressionCompletion(update);
@@ -1154,6 +1167,29 @@
           hybrid: pattern.key === "hybrid"
         };
       });
+      if (isProgressionMode() && !items.some((item) => item.volume === "high")) {
+        const promote = items.find((item) => {
+          if (item.hybrid) return false;
+          const update = progressionUpdates.find((entry) => entry.key === progressionKey("kettlebell", item.name));
+          return update && getProgressionProfile(update.key).bag.includes("high");
+        });
+        if (promote) {
+          const update = progressionUpdates.find((entry) => entry.key === progressionKey("kettlebell", promote.name));
+          const bag = [...getProgressionProfile(update.key).bag];
+          const highIndex = bag.indexOf("high");
+          if (highIndex >= 0) bag.splice(highIndex, 1);
+          update.volume = "high";
+          update.consume = "high";
+          update.bagAfter = bag;
+          promote.volume = "high";
+          promote.target = getKbTarget(promote.liftType, "high", update.base);
+          promote.dose = formatKbDose(promote.liftType, "high", update.base);
+        }
+      }
+      items.forEach((item) => {
+        item.accent = item.volume === "high";
+      });
+      const actualAccent = items.find((item) => item.volume === "high" && !item.hybrid);
 
       return {
         dateKey: todayKey(),
@@ -1162,7 +1198,7 @@
         title: "Kettlebell Exhibition",
         subtitle: isProgressionMode() ? "Progression." : "One high / previous low / medium.",
         summary: "",
-        accentKey,
+        accentKey: isProgressionMode() ? (actualAccent ? actualAccent.patternKey : null) : accentKey,
         previousAccent,
         progressionUpdates,
         items
@@ -1202,10 +1238,10 @@
         progressionUpdates: volumeItems.progressionUpdates || [],
         items: shuffle(volumeItems.items).map((item) => ({
           ...item,
-          target: getStrengthTarget(item.volume, BARBELL_VOLUME_PRESETS, item.base),
-          dose: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS, item.base),
-          prescription: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS, item.base),
-          perSet: PER_SET.grind,
+          target: getBarbellTarget(item.volume),
+          dose: formatBarbellDose(item.volume),
+          prescription: formatBarbellDose(item.volume),
+          perSet: formatBarbellLoad(item.volume),
           done: 0,
           weight: state.barbell.weights[item.name] || "",
           nudge: state.barbell.nudges[item.name] || 0
@@ -1276,6 +1312,27 @@
           previousLow: false
         };
       });
+      if (!items.some((item) => item.volume === "high")) {
+        const promote = items.find((item) => {
+          const update = progressionUpdates.find((entry) => entry.key === progressionKey(modality, item.name));
+          return update && getProgressionProfile(update.key).bag.includes("high");
+        });
+        if (promote) {
+          const update = progressionUpdates.find((entry) => entry.key === progressionKey(modality, promote.name));
+          const bag = [...getProgressionProfile(update.key).bag];
+          const highIndex = bag.indexOf("high");
+          if (highIndex >= 0) bag.splice(highIndex, 1);
+          update.volume = "high";
+          update.consume = "high";
+          update.bagAfter = bag;
+          promote.volume = "high";
+          promote.dose = formatStrengthDose("high", null, update.base);
+          promote.accent = true;
+        }
+      }
+      items.forEach((item) => {
+        item.accent = item.volume === "high";
+      });
       const high = items.find((item) => item.volume === "high");
       return {
         accentLift: high ? high.name : null,
@@ -1287,6 +1344,21 @@
     function formatStrengthDose(volume, presets, base) {
       const reps = getStrengthTarget(volume, presets, base);
       return volume === "high" ? reps + "+ total reps" : reps + " total reps";
+    }
+
+    function formatBarbellDose(volume) {
+      const item = BARBELL_LADDERS[volume] || BARBELL_LADDERS.medium;
+      return item.dose;
+    }
+
+    function formatBarbellLoad(volume) {
+      const item = BARBELL_LADDERS[volume] || BARBELL_LADDERS.medium;
+      return item.load + ", 2-3 RIR on highest rung";
+    }
+
+    function getBarbellTarget(volume) {
+      const item = BARBELL_LADDERS[volume] || BARBELL_LADDERS.medium;
+      return item.target;
     }
 
     function getStrengthTarget(volume, presets, base) {
@@ -1509,7 +1581,7 @@
           <section class="lift-card ${item.accent ? "accent-card" : ""} ${item.previousLow ? "low-card" : ""}">
             <div class="lift-top">
               <div>
-                <p class="kicker">${escapeHtml(item.prescription)}</p>
+                <p class="kicker">${escapeHtml(volumeLabel(item))}</p>
                 <p class="lift-name">${escapeHtml(item.name)}</p>
               </div>
               <span class="dose">${escapeHtml(item.dose)}</span>
@@ -1523,7 +1595,7 @@
               <button class="nudge ${item.nudge < 0 ? "active-minus" : ""}" type="button" data-nudge="${escapeHtml(item.name)}" data-value="-1">-</button>
               <button class="nudge ${item.nudge > 0 ? "active-plus" : ""}" type="button" data-nudge="${escapeHtml(item.name)}" data-value="1">+</button>
             </div>
-            <div class="quiet">${escapeHtml(volumeLabel(item))}</div>
+            <div class="quiet">${escapeHtml(nudgeText(item.nudge))}</div>
             ${renderRepTracker(item)}
           </section>
         `).join("");

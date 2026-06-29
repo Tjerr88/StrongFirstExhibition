@@ -1,4 +1,4 @@
-const CACHE_NAME = "strongfirst-exhibition-v13";
+const CACHE_NAME = "strongfirst-exhibition-v17";
 const APP_SHELL = [
   "./",
   "./index.html",
