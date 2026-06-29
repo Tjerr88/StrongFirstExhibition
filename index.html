@@ -338,7 +338,7 @@
 
     .volume-control {
       display: inline-grid;
-      grid-template-columns: auto repeat(3, minmax(34px, 1fr));
+      grid-template-columns: auto repeat(4, minmax(34px, 1fr));
       align-items: center;
       gap: 4px;
       min-height: 42px;
@@ -622,7 +622,7 @@
       .tab { width: 100%; }
       .toggle-row { justify-content: stretch; display: grid; grid-template-columns: 1fr; }
       .toggle { justify-content: space-between; }
-      .volume-control { grid-template-columns: auto repeat(3, minmax(0, 1fr)); }
+      .volume-control { grid-template-columns: auto repeat(4, minmax(0, 1fr)); }
       .check-grid { grid-template-columns: 1fr; }
       .grid.two, .grid.three { grid-template-columns: 1fr; }
       .card-header { display: grid; }
@@ -660,6 +660,7 @@
           <button class="volume-button" type="button" data-volume="low">L</button>
           <button class="volume-button" type="button" data-volume="medium">M</button>
           <button class="volume-button" type="button" data-volume="high">H</button>
+          <button class="volume-button" type="button" data-volume="progression">P</button>
         </div>
       </div>
     </section>
@@ -797,26 +798,21 @@
       high: { low: 20, medium: 25, high: 30 }
     };
 
+    const PROGRESSION_BAG = ["low", "low", "medium", "medium", "medium", "high"];
+    const PROGRESSION_BASES = ["low", "medium", "high"];
+
     const KB_TOTALS = {
       grind: VOLUME_PRESETS,
       seconds: VOLUME_PRESETS,
       distance: VOLUME_PRESETS,
-      singleQuick: {
-        low: { low: 50, medium: 100, high: 150 },
-        medium: { low: 75, medium: 125, high: 175 },
-        high: { low: 100, medium: 150, high: 200 }
-      },
-      doubleQuick: {
-        low: { low: 10, medium: 20, high: 40 },
-        medium: { low: 15, medium: 30, high: 50 },
-        high: { low: 20, medium: 40, high: 60 }
-      }
+      singleQuick: VOLUME_PRESETS,
+      doubleQuick: VOLUME_PRESETS
     };
 
     const PER_SET = {
-      grind: "1-5 / set",
-      singleQuick: "10-20 / set",
-      doubleQuick: "5-10 / set",
+      grind: "1-2-3(-4-5) ladder",
+      singleQuick: "5-10(-15-20) ladder",
+      doubleQuick: "2-4-6(-8-10) ladder",
       seconds: "seconds",
       distance: "meters",
       timed: "quality"
@@ -895,6 +891,7 @@
         lastKbAccent: null,
         lastBarbellAccent: null,
         lastBodyweightAccent: null,
+        progression: { lifts: {} },
         barbell: { weights: {}, nudges: {} }
       };
     }
@@ -917,6 +914,7 @@
         settings: { ...base.settings, ...(saved.settings || {}) },
         readiness: { ...base.readiness, ...(saved.readiness || {}) },
         rotations: { ...base.rotations, ...(saved.rotations || {}), kbLiftBags: { ...base.rotations.kbLiftBags, ...((saved.rotations || {}).kbLiftBags || {}) } },
+        progression: { ...base.progression, ...(saved.progression || {}), lifts: { ...base.progression.lifts, ...((saved.progression || {}).lifts || {}) } },
         barbell: { ...base.barbell, ...(saved.barbell || {}), weights: { ...base.barbell.weights, ...((saved.barbell || {}).weights || {}) }, nudges: { ...base.barbell.nudges, ...((saved.barbell || {}).nudges || {}) } }
       };
     }
@@ -1057,16 +1055,89 @@
       return pattern.lifts.find((lift) => lift.name === name);
     }
 
+    function isProgressionMode() {
+      return state.settings.volume === "progression";
+    }
+
+    function progressionKey(modality, name) {
+      return modality + "::" + name;
+    }
+
+    function getProgressionProfile(key) {
+      const saved = (state.progression && state.progression.lifts && state.progression.lifts[key]) || {};
+      const base = PROGRESSION_BASES.includes(saved.base) ? saved.base : "low";
+      const bag = Array.isArray(saved.bag) && saved.bag.length ? saved.bag.filter((item) => PROGRESSION_BAG.includes(item)) : shuffle(PROGRESSION_BAG);
+      return { base, bag };
+    }
+
+    function previewProgressionVolume(key, highAvailable) {
+      const profile = getProgressionProfile(key);
+      const bag = [...profile.bag];
+      const highIndex = bag.indexOf("high");
+      if (highIndex >= 0 && !highAvailable && bag.some((item) => item !== "high")) {
+        const fallbackIndex = bag.findIndex((item) => item !== "high");
+        const volume = bag[fallbackIndex];
+        bag.splice(fallbackIndex, 1);
+        return { key, base: profile.base, volume, consume: volume, bagAfter: bag };
+      }
+      const volume = bag.shift() || "medium";
+      if (volume === "high" && !highAvailable) {
+        return { key, base: profile.base, volume: "medium", consume: null, bagAfter: profile.bag };
+      }
+      return { key, base: profile.base, volume, consume: volume, bagAfter: bag };
+    }
+
+    function commitProgressionUpdates(plan) {
+      if (!plan || !Array.isArray(plan.progressionUpdates) || !plan.progressionUpdates.length) return;
+      const completed = [];
+      plan.progressionUpdates.forEach((update) => {
+        if (!update.consume) return;
+        const current = getProgressionProfile(update.key);
+        const index = current.bag.indexOf(update.consume);
+        const bag = [...current.bag];
+        if (index >= 0) bag.splice(index, 1);
+        let base = current.base;
+        if (!bag.length) {
+          if (base === "high") {
+            completed.push(update);
+            base = handleProgressionCompletion(update);
+          } else {
+            base = PROGRESSION_BASES[PROGRESSION_BASES.indexOf(base) + 1] || "high";
+          }
+        }
+        state.progression.lifts[update.key] = {
+          base,
+          bag: bag.length ? bag : shuffle(PROGRESSION_BAG)
+        };
+      });
+    }
+
+    function handleProgressionCompletion(update) {
+      const label = update.modality === "bodyweight" ? "Harder variation?" : update.modality === "kettlebell" ? "Increase bell?" : "Increase load?";
+      return window.confirm(update.name + ": " + label) ? "low" : "high";
+    }
+
     function generateKettlebellPlan() {
       const accentable = KB_PATTERNS.filter((pattern) => pattern.accentable).map((pattern) => pattern.key);
       const allowedAccent = accentable.filter((key) => key !== state.lastKbAccent);
       const accentKey = drawFromBag("kbAccentBag", accentable, allowedAccent.length ? allowedAccent : accentable);
       const previousAccent = state.lastKbAccent;
+      const progressionUpdates = [];
+      let highUsed = false;
       const items = shuffle(KB_PATTERNS).map((pattern) => {
         const lift = drawKbLift(pattern);
         let volume = "medium";
-        if (pattern.key === accentKey) volume = "high";
-        if (pattern.key === previousAccent || pattern.key === "hybrid") volume = "low";
+        let progression = null;
+        if (isProgressionMode() && pattern.key !== "hybrid") {
+          const key = progressionKey("kettlebell", lift.name);
+          progression = previewProgressionVolume(key, !highUsed);
+          volume = progression.volume;
+          highUsed = highUsed || volume === "high";
+          progressionUpdates.push({ ...progression, modality: "kettlebell", name: lift.name });
+        } else {
+          if (pattern.key === accentKey) volume = "high";
+          if (pattern.key === previousAccent || pattern.key === "hybrid") volume = "low";
+        }
         const target = getKbTarget(lift.type, volume);
         return {
           pattern: pattern.label,
@@ -1075,10 +1146,10 @@
           liftType: lift.type,
           volume,
           target,
-          dose: formatKbDose(lift.type, volume),
+          dose: formatKbDose(lift.type, volume, progression ? progression.base : null),
           perSet: PER_SET[lift.type],
           done: 0,
-          accent: pattern.key === accentKey,
+          accent: volume === "high",
           previousLow: pattern.key === previousAccent,
           hybrid: pattern.key === "hybrid"
         };
@@ -1089,47 +1160,51 @@
         sessionType: "strength",
         modality: "kettlebell",
         title: "Kettlebell Exhibition",
-        subtitle: "One high / previous low / medium.",
+        subtitle: isProgressionMode() ? "Progression." : "One high / previous low / medium.",
         summary: "",
         accentKey,
         previousAccent,
+        progressionUpdates,
         items
       };
     }
 
-    function formatKbDose(type, volume) {
-      const value = getKbTarget(type, volume);
+    function formatKbDose(type, volume, base) {
+      const value = getKbTarget(type, volume, base);
       if (type === "timed") return value + " quality";
       if (type === "seconds") return (volume === "high" ? value + "+" : value) + " sec";
       if (type === "distance") return (volume === "high" ? value + "+" : value) + " m";
       return (volume === "high" ? value + "+" : value) + " total reps";
     }
 
-    function getKbTarget(type, volume) {
+    function getKbTarget(type, volume, base) {
       if (type === "timed") return KB_VOLUME.timed[volume];
       const preset = KB_TOTALS[type] || KB_TOTALS.grind;
-      const value = (preset[state.settings.volume] || preset.low)[volume];
+      const value = (preset[base || state.settings.volume] || preset.low)[volume];
       return type === "distance" ? value * 3 : value;
     }
 
     function generateBarbellPlan() {
       const block = drawBlock("barbellBag", BARBELL_BLOCKS);
-      const volumeItems = assignStrengthVolumes(block.lifts, state.lastBarbellAccent);
+      const volumeItems = isProgressionMode()
+        ? assignProgressionVolumes(block.lifts, "barbell", BARBELL_VOLUME_PRESETS)
+        : assignStrengthVolumes(block.lifts, state.lastBarbellAccent);
       return {
         dateKey: todayKey(),
         sessionType: "strength",
         modality: "barbell",
         title: block.title,
-        subtitle: getStrengthDoseLabel(BARBELL_VOLUME_PRESETS),
+        subtitle: isProgressionMode() ? "Progression." : getStrengthDoseLabel(BARBELL_VOLUME_PRESETS),
         summary: "",
         dice: block.dice,
         accentLift: volumeItems.accentLift,
         previousAccentLift: state.lastBarbellAccent,
+        progressionUpdates: volumeItems.progressionUpdates || [],
         items: shuffle(volumeItems.items).map((item) => ({
           ...item,
-          target: getStrengthTarget(item.volume, BARBELL_VOLUME_PRESETS),
-          dose: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS),
-          prescription: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS),
+          target: getStrengthTarget(item.volume, BARBELL_VOLUME_PRESETS, item.base),
+          dose: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS, item.base),
+          prescription: formatStrengthDose(item.volume, BARBELL_VOLUME_PRESETS, item.base),
           perSet: PER_SET.grind,
           done: 0,
           weight: state.barbell.weights[item.name] || "",
@@ -1140,21 +1215,24 @@
 
     function generateBodyweightPlan() {
       const block = drawBlock("bodyweightBag", BODYWEIGHT_BLOCKS);
-      const volumeItems = assignStrengthVolumes(block.lifts, state.lastBodyweightAccent);
+      const volumeItems = isProgressionMode()
+        ? assignProgressionVolumes(block.lifts, "bodyweight")
+        : assignStrengthVolumes(block.lifts, state.lastBodyweightAccent);
       return {
         dateKey: todayKey(),
         sessionType: "strength",
         modality: "bodyweight",
         title: block.title,
-        subtitle: getStrengthDoseLabel(),
+        subtitle: isProgressionMode() ? "Progression." : getStrengthDoseLabel(),
         summary: "",
         dice: block.dice,
         accentLift: volumeItems.accentLift,
         previousAccentLift: state.lastBodyweightAccent,
+        progressionUpdates: volumeItems.progressionUpdates || [],
         items: shuffle(volumeItems.items).map((item) => ({
           ...item,
-          target: getStrengthTarget(item.volume),
-          prescription: formatStrengthDose(item.volume),
+          target: getStrengthTarget(item.volume, null, item.base),
+          prescription: formatStrengthDose(item.volume, null, item.base),
           perSet: PER_SET.grind,
           done: 0
         }))
@@ -1181,23 +1259,48 @@
       };
     }
 
-    function formatStrengthDose(volume, presets) {
-      const reps = getStrengthTarget(volume, presets);
+    function assignProgressionVolumes(lifts, modality) {
+      const progressionUpdates = [];
+      let highUsed = false;
+      const items = lifts.map((name) => {
+        const key = progressionKey(modality, name);
+        const progression = previewProgressionVolume(key, !highUsed);
+        highUsed = highUsed || progression.volume === "high";
+        progressionUpdates.push({ ...progression, modality, name });
+        return {
+          name,
+          base: progression.base,
+          volume: progression.volume,
+          dose: formatStrengthDose(progression.volume, null, progression.base),
+          accent: progression.volume === "high",
+          previousLow: false
+        };
+      });
+      const high = items.find((item) => item.volume === "high");
+      return {
+        accentLift: high ? high.name : null,
+        progressionUpdates,
+        items
+      };
+    }
+
+    function formatStrengthDose(volume, presets, base) {
+      const reps = getStrengthTarget(volume, presets, base);
       return volume === "high" ? reps + "+ total reps" : reps + " total reps";
     }
 
-    function getStrengthTarget(volume, presets) {
-      return getVolumePreset(presets)[volume];
+    function getStrengthTarget(volume, presets, base) {
+      return getVolumePreset(presets, base)[volume];
     }
 
-    function getStrengthDoseLabel(presets) {
-      const preset = getVolumePreset(presets);
+    function getStrengthDoseLabel(presets, base) {
+      const preset = getVolumePreset(presets, base);
       return preset.low + " / " + preset.medium + " / " + preset.high + "+ total reps.";
     }
 
-    function getVolumePreset(presets) {
+    function getVolumePreset(presets, base) {
       const source = presets || VOLUME_PRESETS;
-      return source[state.settings.volume] || source.low;
+      return source[base || state.settings.volume] || source.low;
     }
 
     function drawBlock(bagKey, blocks) {
@@ -1568,6 +1671,7 @@
       if (plan.modality === "bodyweight" && plan.accentLift) {
         state.lastBodyweightAccent = plan.accentLift;
       }
+      commitProgressionUpdates(plan);
       saveState();
       launchConfetti();
       render();
@@ -1761,7 +1865,7 @@
     document.querySelectorAll("[data-volume]").forEach((button) => {
       button.addEventListener("click", () => {
         const volume = button.getAttribute("data-volume");
-        if (!VOLUME_PRESETS[volume]) return;
+        if (!VOLUME_PRESETS[volume] && volume !== "progression") return;
         state.settings.volume = volume;
         state.todayPlan = null;
         saveState();
