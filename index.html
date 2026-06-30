@@ -960,6 +960,14 @@
       return state.history.some((item) => item.dateKey === date && item.sessionType === sessionType);
     }
 
+    function hasConsecutiveStrengthDays(count) {
+      for (let index = 1; index <= count; index += 1) {
+        const key = addDays(todayKey(), -index);
+        if (!state.history.some((item) => item.dateKey === key && item.sessionType === "strength")) return false;
+      }
+      return true;
+    }
+
     function latestStrength() {
       return state.history.find((item) => item.sessionType === "strength" && item.modality);
     }
@@ -999,6 +1007,9 @@
       }
       if (check.total >= 8 && check.total <= 9) {
         return generateLoadedMobilityPlan(key);
+      }
+      if (hasConsecutiveStrengthDays(3)) {
+        return generateZone2Plan(key);
       }
       if (check.total === 10) {
         const pastSeven = getEntriesBetween(7);
@@ -1453,8 +1464,12 @@
 
     function renderToday() {
       const view = document.getElementById("todayView");
-      const plan = ensureTodayPlan();
       const done = isTodayDone();
+      if (done) {
+        view.innerHTML = renderDoneScreen();
+        return;
+      }
+      const plan = ensureTodayPlan();
       if (plan.sessionType === "check") {
         view.innerHTML = renderReadinessCheck(plan);
         bindReadinessControls();
@@ -1468,10 +1483,8 @@
               <h2>${escapeHtml(plan.title)}</h2>
               ${plan.subtitle ? `<p class="muted">${escapeHtml(plan.subtitle)}</p>` : ""}
             </div>
-            <div class="badge ${badgeClass(plan)}">${escapeHtml(SESSION_LABELS[plan.modality] || SESSION_LABELS[plan.sessionType] || plan.sessionType)}</div>
           </div>
           ${plan.summary ? `<p class="muted">${escapeHtml(plan.summary)}</p>` : ""}
-          ${renderPlanMeta(plan)}
           <div class="grid session-list" style="margin-top: 14px;">
             ${renderPlanItems(plan)}
           </div>
@@ -1484,6 +1497,20 @@
       document.getElementById("finishButton").addEventListener("click", finishToday);
       bindBarbellControls();
       bindRepTrackers();
+    }
+
+    function renderDoneScreen() {
+      return `
+        <article class="card main-card done">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">${escapeHtml(formatDate(todayKey()))}</p>
+              <h2>Done</h2>
+              <p class="muted">Come back tomorrow.</p>
+            </div>
+          </div>
+        </article>
+      `;
     }
 
     function renderReadinessCheck(plan) {
@@ -1534,28 +1561,6 @@
           render();
         });
       });
-    }
-
-    function badgeClass(plan) {
-      if (plan.sessionType === "strength") return "red";
-      if (plan.sessionType === "zone2") return "green";
-      return "gold";
-    }
-
-    function renderPlanMeta(plan) {
-      const parts = [];
-      const week = getEntriesBetween(7);
-      const check = state.readiness[plan.dateKey];
-      if (check && check.total) parts.push(`<span class="badge">Readiness: ${escapeHtml(check.total + "/15")}</span>`);
-      parts.push(`<span class="badge">Strength: ${week.filter((item) => item.sessionType === "strength").length} this week</span>`);
-      if (plan.modality) parts.push(`<span class="badge red">${escapeHtml(SESSION_LABELS[plan.modality])}</span>`);
-      if (plan.accentKey) {
-        const pattern = KB_PATTERNS.find((item) => item.key === plan.accentKey);
-        parts.push(`<span class="badge gold">Accent: ${escapeHtml(pattern ? pattern.label : plan.accentKey)}</span>`);
-      }
-      if (plan.accentLift) parts.push(`<span class="badge gold">Accent: ${escapeHtml(plan.accentLift)}</span>`);
-      if (plan.dice) parts.push(`<span class="badge">Roll: ${escapeHtml(plan.dice)}</span>`);
-      return `<div class="badge-row">${parts.join("")}</div>`;
     }
 
     function renderPlanItems(plan) {
