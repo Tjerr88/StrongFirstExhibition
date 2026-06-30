@@ -1278,9 +1278,10 @@
         progressionUpdates: volumeItems.progressionUpdates || [],
         items: shuffle(volumeItems.items).map((item) => ({
           ...item,
-          target: getStrengthTarget(item.volume, null, item.base),
-          prescription: formatStrengthDose(item.volume, null, item.base),
-          perSet: PER_SET.grind,
+          target: null,
+          dose: "Quality reps",
+          prescription: volumeLabel(item),
+          perSet: "Stop before form breaks",
           done: 0
         }))
       };
@@ -1610,13 +1611,12 @@
           <section class="lift-card ${item.accent ? "accent-card" : ""} ${item.previousLow ? "low-card" : ""}">
             <div class="lift-top">
               <div>
-                <p class="kicker">${escapeHtml(item.prescription)}</p>
+                <p class="kicker">${escapeHtml(volumeLabel(item))}</p>
                 <p class="lift-name">${escapeHtml(item.name)}</p>
               </div>
               <span class="dose">${escapeHtml(item.dose)}</span>
             </div>
             <div class="subdose">${escapeHtml(item.perSet || "")}</div>
-            <div class="quiet">${escapeHtml(volumeLabel(item))}</div>
             ${renderRepTracker(item)}
           </section>
         `).join("");
@@ -1784,9 +1784,14 @@
         return plan.items.map((item) => item.name + " " + formatLoggedDone(item) + "/" + item.dose + (item.weight ? " @ " + item.weight : "")).join(" | ");
       }
       if (plan.modality === "bodyweight") {
-        return plan.items.map((item) => item.name + " " + formatLoggedDone(item) + "/" + item.dose).join(" | ");
+        return plan.items.map((item) => item.name + " " + formatLoggedDone(item) + "/" + volumeLabel(item) + bodyweightGuide(item)).join(" | ");
       }
       return plan.items.map((item) => item.name).join(" | ");
+    }
+
+    function bodyweightGuide(item) {
+      const target = getStrengthTarget(item.volume, null, item.base);
+      return target ? " (<" + target + ")" : "";
     }
 
     function renderLog() {
